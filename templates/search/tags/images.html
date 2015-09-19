@@ -1,0 +1,59 @@
+
+<input id="searchTerm" type="hidden" value="{{ searchTerm }}">
+
+		{% if flickrPics %}
+			<div class="row col-lg-offset-2 col-lg-10" id="articles" >
+					
+					{% for pic in flickrPics %}
+						{% if pic.url %}
+							<div class="article" >
+							
+									<div class="title">
+										{{ pic.title|truncatechars:30  }}
+									</div>
+									<br />
+									<div class="summary">
+										<img alt=""   src="https://farm{{pic.farm}}.staticflickr.com/{{pic.server}}/{{pic.id}}_{{pic.secret}}_m.jpg">
+					
+									</div>
+								
+							</div>
+						{% endif %}
+					{% endfor %}
+			</div>
+			<br />
+		{% endif %}
+				
+		
+		{% if imageObjects %}
+		<br />	<br /><div class="row col-lg-offset-2 col-lg-10" >
+		<h2>Images Stored</h2><br />
+		</div>
+			<div class="row col-lg-offset-2 col-lg-10" id="storeImages" >
+					
+					{% for pic in imageObjects %}
+						
+							<div class="storeImages" >
+							
+									<div class="title">
+										{{ pic.title|truncatechars:30  }} : {{ pic.searchTerm }}
+									</div>
+									<br />
+									<div class="summary">
+										<img alt=""   src="/media/{{ pic.image.url }}">
+					
+									</div>
+								
+							</div>
+						
+					{% endfor %}
+			</div>
+			<br />
+		{% endif %}
+	
+
+
+
+   
+
+
