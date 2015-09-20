@@ -1,38 +1,61 @@
 # Create your views here.
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from home.forms import HomeTasksForm
-from home.models import HomeTasks
-from django.http.response import HttpResponseRedirect
+from django.shortcuts import render,HttpResponse
+from home.models import HomeImages
+from FacialPro.settings import indicoApi
+from FacialPro.settings import MEDIA_ROOT
+from youtube.api import youTubeSearch
+
+import indicoio, operator 
+
+from django.core.files import File
+indicoio.config.api_key =indicoApi
+from home.models import lookup_table
 
 
+import base64,uuid
 
-@login_required
+def captureImage(request):
+    image =  request.POST.get('image',None)
+    image = image.split('data:image/png;base64,')[1]    
+    imageName = str(uuid.uuid1())+"out.png"    
+    imagePath = MEDIA_ROOT+"/img/person/"+imageName
+    g = open(imagePath, "w")  
+    g.write(base64.decodestring(image))
+    g.close()  
+    img = HomeImages.objects.create()
+    img.image.save(imageName,File(open(imagePath, 'r')) )  
+    data =  indicoio.fer(imagePath) 
+   
+    data = max(data.items(), key=operator.itemgetter(1))[0]   
+    
+    img.emotion = data   
+    img.save()
+    return HttpResponse("")
+
+import random
 def home(request):    
-    tasks = HomeTasks.objects.filter(is_active = True, user = request.user)
-    trashCount = HomeTasks.objects.filter(is_active = False,is_deleted = False, user = request.user).count()
-    return render(request,"home/home.html",{'tasks':tasks,'trashCount':trashCount})
-
-@login_required
-def trashBox(request):    
-    tasks = HomeTasks.objects.filter(is_active = False,is_deleted = False, user = request.user)
-    trashCount = tasks.count()
+    image = HomeImages.objects.latest("datetime")
+   
+    data =  indicoio.fer(image.image.path) 
+   
+    data = max(data.items(), key=operator.itemgetter(1))[0]   
     
-    return render(request,"home/trash.html",{'tasks':tasks,'trashCount':trashCount})
-
-@login_required
-def create(request, id = None):
+    image.emotion = data   
+    image.save()
     
-    try:
-        task = HomeTasks.objects.get(id = int(id), user = request.user)
-    except:
-        if id is not None:
-            return HttpResponseRedirect("/home/create/")
-        else:
-            task = None
-    if task:
-            taskForm = HomeTasksForm(instance = task)
-    else:
-            taskForm = HomeTasksForm()   
-    return render(request,"home/create.html",{"taskForm":taskForm})
- 
+    emotion_list = lookup_table[image.emotion]
+    total = len(emotion_list)
+    counter = 10
+    youtubVideos = []
+    
+    for x in range(total):
+        if counter==0:            
+            break
+        counter = counter -1  
+        someData = emotion_list[random.randrange(0,total)]
+        while(someData==image.emotion):
+            someData = emotion_list[random.randrange(0,total)]
+        youtubVideos += youTubeSearch(someData, 3)
+                             
+    return render(request,"home/home.html",{"image":image,"youtubVideos":youtubVideos})
+

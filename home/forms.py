@@ -6,13 +6,17 @@ Created on Jul 18, 2015
 
 
 from django import forms 
+from home.models import HomeImages
 
-from home.models import HomeTasks
 
-
-class HomeTasksForm(forms.ModelForm):
-    
+class HomeImagesForm(forms.ModelForm):
     class Meta:
-        model = HomeTasks
-        exclude = ('is_active','name','user',"is_deleted")
+        model = HomeImages
+        fields = ["image","title"]
+        
+
+
+
+
+
     

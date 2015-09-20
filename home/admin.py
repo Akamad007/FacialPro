@@ -1,4 +1,4 @@
-from django.contrib import admin
-from home.models import HomeTasks
+from django.contrib import admin 
+from home.models import HomeImages
 
-admin.site.register(HomeTasks)
+admin.site.register(HomeImages)

@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+html{
+	 overflow-y: scroll;
+}
+.grid-sizer { width: 20%; }
+.item { width: 20%; }
+
+@media screen and (max-width: 1224px) {
+  .grid-sizer { width: 33.33%; }
+  .item { width: 33.33%; }
+}
+
+@media screen and (max-width: 720px) {
+  .grid-sizer { width: 50%; }
+  .item { width: 50%; }
+}
+
+@media screen and (max-width: 480px) {
+  .grid-sizer { width: 100%; }
+  .item { width: 100%; }
+}
+.overlay {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    position: absolute;
+    top: 0;
+    left: 0;
+    text-decoration: none;
+    color: #fff;
+    display: none;
+}
+
+.overlay .title {
+    text-align: center;
+    font-size: 30px;
+}
+
+.overlay .description {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0,0,0,0.80);
+    width: 100%;
+    margin: 0;
+}
+
+.overlay .description p {
+    margin: 20px;
+}
+
+.item:hover .overlay {
+    display: block;
+}
+.image {
+    max-width: 100%;
+    margin: 0;
+    display: block;
+}
+</style>
+<div>
+		<div class="container">
+		    
+				<div class="row col-lg-8 col-lg-offset-2">		
+			
+				<div>
+					<div id="webcam" style="display:inline-block">
+					</div>
+			
+					
+					
+				</div>
+				</div>	
+		<br />					
+						<br />		
+				
+		
+		
+	</div>
+	<div><h2>{{ image.emotion }}</h2></div>
+	<div id="container">
+			<div class="grid-sizer"></div>
+					<div class="item">
+						<img src="/media/{{ image.image }}" class="image">
+						<!-- This is the overlay for the hover -->
+						<a class="overlay" href="#">
+							<h3 class="title">{{ image.title }}</h3>
+							<div class="description">
+								<p>
+									User Emotion : {{ image.emotion }}
+								</p>
+							</div>
+						</a>					
+					</div>
+			
+			{% for youtube in youtubVideos %}
+				<div class="item">
+				 <embed  class="image" src="http://www.youtube.com/embed/{{ youtube }}" >		
+				</div>
+			{% endfor %}
+
+					
+
+			
+		</div>
+</div>
+{% endblock %}
+{% block inlinejs %}
+
+		<script>
+		$(window).load( function() {
+
+		    $('#container').masonry({
+		        "itemSelector": ".item",
+		        "columnWidth": ".grid-sizer",
+		    });
+		    
+		   
+
+		});
+		$(function() {
+
+			var pos = 0, ctx = null, saveCB, image = [];
+			
+			var canvas = document.createElement("canvas");
+			canvas.setAttribute('width', 320);
+			canvas.setAttribute('height', 240);
+			
+			if (canvas.toDataURL) {
+
+				ctx = canvas.getContext("2d");
+				
+				image = ctx.getImageData(0, 0, 320, 240);
+			
+				saveCB = function(data) {
+					
+					var col = data.split(";");
+					var img = image;
+
+					for(var i = 0; i < 320; i++) {
+						var tmp = parseInt(col[i]);
+						img.data[pos + 0] = (tmp >> 16) & 0xff;
+						img.data[pos + 1] = (tmp >> 8) & 0xff;
+						img.data[pos + 2] = tmp & 0xff;
+						img.data[pos + 3] = 0xff;
+						pos+= 4;
+					}
+
+					if (pos >= 4 * 320 * 240) {
+						ctx.putImageData(img, 0, 0);
+						$.post("/home/images/", {type: "data", image: canvas.toDataURL("image/png")})
+						.done(function( data ) {
+							location.reload();
+						  });
+						pos = 0;
+					}
+				};
+
+			} else {
+
+				saveCB = function(data) {
+					image.push(data);
+					
+					pos+= 4 * 320;
+					
+					if (pos >= 4 * 320 * 240) {
+						$.post("/imageData", {type: "pixel", image: image.join('|')});
+						pos = 0;
+					}
+				};
+			}
+
+			$("#webcam").webcam({
+
+				width: 320,
+				height: 240,
+				mode: "callback",
+				swffile: "/media/js/jscam.swf",
+
+				onSave: saveCB,
+
+				onCapture: function () {
+					webcam.save();
+				},
+				onLoad:function(){
+					
+					 
+				},
+				debug: function (type, string) {
+					console.log(string);
+					 if (string == "Camera started") {
+						 
+						 window.webcam.capture(1);
+					 } 
+				}
+			});
+
+		});
+		</script>
+{% endblock %}

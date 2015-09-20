@@ -19,6 +19,7 @@ from FacialPro.settings import MEDIA_ROOT,MY_APPS
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^', include("home.urls")),
 ]
 
 for apps in MY_APPS:
